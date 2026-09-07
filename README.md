@@ -61,7 +61,7 @@ cd Karaoke_Maker
 pip install -r requirements.txt
 ```
 
-##2. Execution
+### 2. Execution
 
 Run the main pipeline on your input media file:
 
