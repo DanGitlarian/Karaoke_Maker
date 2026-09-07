@@ -17,12 +17,12 @@ An automated end-to-end Python pipeline that converts audio/video files into ful
 ```mermaid
 graph TD
     A[Input Audio / Video] --> B[Audio Separation]
-    A --> C[Speech Recognition & Alignment<br/>WhisperX + Pyannote VAD]
+    C --> D[Speech Recognition & Alignment<br/>WhisperX + Pyannote VAD]
     
-    B --> D[Vocal Track]
+    B --> C[Vocal Track]
     B --> E[Instrumental Track]
     
-    C --> F[Dynamic ASS Subtitles<br/>Word-level timing tags \k]
+    D --> F[Dynamic ASS Subtitles<br/>Word-level timing tags \k]
     
     E --> G[FFmpeg Encoder]
     F --> G
