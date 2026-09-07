@@ -83,71 +83,107 @@ The .ass subtitle files are generated with customizable styling options:
     Colors: Primary text color, outline, and highlight color configurations.
 
 ### 3. File Summary
-File Summaries: Inputs, Outputs, and Options
 
-#### main.py (Pipeline Orchestrator)
+#### preprocess_filenames.py
+* **Input**: Files in `Songs\input`.
 
-Role: The main entry point that chains together stem separation, speech alignment, subtitle generation, and video encoding.
 
-Inputs: Raw audio/video file (e.g., .mp3, .wav, .mp4). Optional manual text file (lyrics.txt) or word timing JSON (vocals.json).
+* **Output**: Renamed audio/video files with clean titles.
 
-Outputs: Final rendered karaoke video (.mp4), standalone backing audio (.mp4/.wav), and formatted subtitle files (.ass).
 
-Options / Arguments:
+* **Options**: Strips common garbage tags like `(Official Music Video)`, spaces, or special characters to standardize folder names down the line.
 
-        --input: Path to input media file.
 
-        --output_dir: Target directory for generated artifacts.
 
-        --lyrics_file: Path to external lyrics text if skipping automatic transcription.
 
-        --font_name / --font_size: Typography settings for subtitle overlays.
+#### separator.py (and the `vocal-separate` utility)
+* **Input**: Raw song files in `Songs\input`.
 
-#### transcribe_align.py (WhisperX & VAD Engine)
 
-Role: Extracts audio speech, runs voice activity detection via Pyannote VAD, and aligns words using WhisperX phoneme models.
+* **Output**: Extracted vocal and instrumental stems moved into output folders.
 
-Inputs: Vocal audio track extracted during stem separation (or direct audio file).
 
-Outputs: Structured vocals.json file containing words, start times, end times, and confidence scores.
+* **Options**: Allows splitting tracks into isolated instrumental backing and isolated vocal audio tracks.
 
-Options / Arguments:
 
-        --model: Selects Whisper model size (e.g., tiny, base, medium, large-v2).
 
-        --language: Specifies source language or enables auto-detection.
 
-        --device: Hardware target (cuda vs. cpu).
+#### bulk_transcribe.py / transcribe_lyrics.py
+* **Input**: Vocal track stem + optional reference text (`lyrics.txt`).
 
-#### ass_generator.py (Subtitle Stylist & Timing Calculator)
 
-Role: Reads word-level alignment JSON, interpolates missing timestamps based on character counts, splits long lyric blocks, and computes \k / \kf highlight tags.
+* **Output**: Raw timestamped `.json` transcript (containing word alignments).
 
-Inputs: vocals.json or processed word list + style configuration options.
 
-Outputs: Styled .ass (Advanced SubStation Alpha) subtitle file.
+* **Options**:
+#### bulk_transcribe.py : Fully automatic Whisper speech-to-text.
 
-Options / Arguments:
 
-        --max_chars_per_line: Line-wrapping threshold to prevent on-screen overflow.
+#### transcribe_lyrics.py : Forced alignment (aligns a pre-provided lyric text file against the vocal audio).
 
-        --highlight_color: Primary fill color for active sung syllables.
 
-        --outline_color / --back_color: Styling for text borders and shadow boxes.
+#### lyric_syncer.py : Configurable for English or non-English Whisper modes.
 
-#### video_builder.py (FFmpeg Encoding Wrapper)
 
-Role: Takes the backing instrumental stem, overlays the styled .ass file, and encodes the final media file using FFmpeg.
 
-Inputs: Instrumental audio track (.wav/.mp3), .ass subtitle file, background image/video asset.
 
-Outputs: Final .mp4 karaoke video file.
 
-Options / Arguments:
 
-        --video_codec: Encoder selection (e.g., libx264, h264_nvenc).
+#### organize_songs.py
+* **Input**: Loose files, isolated audio stems, and generated `.json` alignments.
 
-        --resolution: Output video resolution (e.g., 1920x1080).
+
+* **Output**: Structured per-song directory layout (e.g., `Songs/input/<song_name>/`).
+
+
+* **Options**: Creates the required subfolder structure and expects `song_video.mp4` to be placed inside for final rendering.
+
+
+
+
+#### generate_vocal_chunks.py
+* **Input**: Unprocessed `.json` vocal timestamp file.
+
+
+* **Output**: Segmented `vocal_chunks.json` (broken down by sentence/phrase boundaries).
+
+
+* **Options**: Controls phrase splitting so lines don't run off the edge of the screen during playback.
+
+
+#### chunks_to_karaoke.py / json_to_karaoke.py
+* **Input**: Segmented JSON chunks or raw JSON word timestamps.
+
+
+* **Output**: Styled `.ass` (Advanced SubStation Alpha) subtitle file with `\k` karaoke highlight timing tags.
+
+
+* **Options**: Configures subtitle font styles, text colors (e.g., active highlight color), font size, and line position.
+
+
+
+
+#### make_karaoke_videos.py / finalize_karaoke.py
+* **Input**: Background video (`song_video.mp4`), `.ass` subtitle file, and instrumental audio stem.
+
+
+* **Output**: Rendered `.mp4` karaoke video.
+
+#### Options for finalization:
+#### make_karaoke_videos.py : Mixes background video with karaoke subtitles while keeping original audio/vocals.
+
+
+#### finalize_karaoke.py`: Renders the final video replacing original audio with the isolated **instrumental** track (vocal removal).
+
+
+
+#### post_adjustment.bat 
+* **Input**: Existing `.json` transcript files.
+* **Output**: Updated `.ass` subtitles without re-running stem separation or Whisper transcription.
+* **Options**: A quick editor/re-processor for manual tweaks after reviewing initial timestamps.
+
+
+
 
 📄 License
 
